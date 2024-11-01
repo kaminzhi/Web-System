@@ -3,7 +3,7 @@ const express = require('express');
 const initializeDatabase = require('./config/dbInit');
 const playerRoutes = require('./routes/players');
 const csvRouter = require('./routes/csv');
-
+const gamesRouter = require('./routes/games');
 
 const app = express();
 
@@ -20,6 +20,7 @@ initializeDatabase().then(() => {
 // 使用路由
 app.use('/api/players', playerRoutes);
 app.use('/api/csv', csvRouter);
+app.use('/api/games', gamesRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

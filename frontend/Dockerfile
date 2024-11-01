@@ -1,4 +1,4 @@
-FROM node:14 as build
+FROM node:18-alpine as build
 
 WORKDIR /app
 
@@ -13,9 +13,8 @@ RUN npm run build
 FROM nginx:alpine
 
 COPY --from=build /app/build /usr/share/nginx/html
-COPY --from=build /app/public/manifest.json /usr/share/nginx/html/manifest.json
-#COPY --from=build /app/public/favicon.ico /usr/share/nginx/html/favicon.ico
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+EXPOSE 3000
 
 CMD ["nginx", "-g", "daemon off;"]

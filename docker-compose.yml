@@ -15,7 +15,14 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
+      - DB_USER=postgres
+      - DB_PASSWORD=your_password
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=leaderboard
+      - GAME_NAMES=game_1,game_2,game_3,game_4,game_5
+      - GAME_DISPLAY_NAMES=遊戲一,遊戲二,遊戲三,遊戲四,遊戲五
 
   nginx:
     build:
@@ -37,3 +44,5 @@ services:
       - .postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    links:
+      - backend

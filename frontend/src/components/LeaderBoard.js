@@ -41,7 +41,7 @@ function LeaderBoard({ setIsAuthenticated }) {
   const [errorMessage, setErrorMessage] = useState(null);
   const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
   const [isNickname, setIsNickname] = useState(false);
-  const [showRealName, setShowRealName] = useState({});
+  const [displayNameType, setDisplayNameType] = useState({}); // 0為真名，1為暱稱
   const [currentPlayerName, setCurrentPlayerName] = useState('');
   const [currentPlayerNickname, setCurrentPlayerNickname] = useState('');
 
@@ -120,10 +120,15 @@ function LeaderBoard({ setIsAuthenticated }) {
 
   const handlePlayerClick = (player) => {
     if (player.nickname) {
-      setSearchTerm(player.nickname);
-      setIsNickname(true);
+      const displayName = displayNameType[player.name] === 0 ? player.name : player.nickname;
+      setSearchTerm(displayName);
+      setCurrentPlayerName(player.name);
+      setCurrentPlayerNickname(player.nickname);
+      setIsNickname(displayNameType[player.name] !== 0);
     } else {
       setSearchTerm(player.name);
+      setCurrentPlayerName(player.name);
+      setCurrentPlayerNickname('');
       setIsNickname(false);
     }
   };
@@ -155,13 +160,19 @@ function LeaderBoard({ setIsAuthenticated }) {
       const score = parseInt(newScore);
       if (!isNaN(score)) {
         try {
-          const isRealNameShown = currentPlayerNickname && showRealName[currentPlayerName];
-          await axios.put('/api/players/update-score', {
+          const displayType = currentPlayerNickname && displayNameType[currentPlayerName] === 1 ? 1 : 0;
+          
+          const requestData = {
             gameName: selectedGame,
-            playerName: isRealNameShown ? searchTerm : "null",
-            nickname: isRealNameShown ? "" : searchTerm,
-            newScore: score
-          });
+            playerName: displayType === 0 ? currentPlayerName : null,
+            nickname: displayType === 1 ? currentPlayerNickname : null,
+            newScore: score,
+            displayType: displayType
+          };
+
+          console.log('Sending request with data:', requestData);
+
+          await axios.put('/api/players/update-score', requestData);
           
           // 顯示成功通知
           setNotification('分數更新成功');
@@ -170,8 +181,8 @@ function LeaderBoard({ setIsAuthenticated }) {
           // 重新獲取數據以更新排行榜
           await updateLeaderboard();
           
-          // 重置所有玩家的顯示狀態為顯示暱稱
-          setShowRealName({});
+          // 重置所有玩家的顯示狀態為顯示暱稱(1)
+          setDisplayNameType({});
           
           setNewScore('');
           setSearchTerm('');
@@ -183,27 +194,29 @@ function LeaderBoard({ setIsAuthenticated }) {
         }
       }
     }
-  }, [selectedGame, newScore, searchTerm, updateLeaderboard, setNotification, setErrorMessage]);
+  }, [selectedGame, newScore, searchTerm, updateLeaderboard, currentPlayerName, currentPlayerNickname, displayNameType]);
 
   const toggleName = (playerName) => {
-    setShowRealName(prev => {
+    setDisplayNameType(prev => {
       const newState = { ...prev };
-      if (newState[playerName]) {
-        // 如果當前玩家正在顯示真名，將其切換回暱稱
-        newState[playerName] = false;
+      if (newState[playerName] === 0) {
+        // 如果當前是顯示真名(0)，切換為暱稱(1)
+        newState[playerName] = 1;
+        if (searchTerm === currentPlayerName) {
+          setSearchTerm(currentPlayerNickname);
+          setIsNickname(true);
+        }
       } else {
-        // 如果當前玩家正在顯示暱稱，將其切換為真名，並將所有其他玩家切換回暱稱
+        // 如果當前是顯示暱稱(1)或未設置，將所有玩家設為暱稱(1)，當前玩家設為真名(0)
         Object.keys(newState).forEach(key => {
-          newState[key] = false;
+          newState[key] = 1;
         });
-        newState[playerName] = true;
+        newState[playerName] = 0;
+        if (searchTerm === currentPlayerNickname) {
+          setSearchTerm(currentPlayerName);
+          setIsNickname(false);
+        }
       }
-
-      // 更新搜索框
-      if (searchTerm === currentPlayerName || searchTerm === currentPlayerNickname) {
-        setSearchTerm(newState[playerName] ? currentPlayerName : currentPlayerNickname);
-      }
-
       return newState;
     });
   };
@@ -287,9 +300,10 @@ function LeaderBoard({ setIsAuthenticated }) {
                   <table className="w-full font-mono">
                     <thead>
                       <tr className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-                        <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider w-1/4">排名</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider w-1/2">玩家</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider w-1/4">分數</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider w-1/6">排名</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider w-1/3">玩家</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider w-1/3">系班級</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider w-1/6">分數</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
@@ -299,7 +313,7 @@ function LeaderBoard({ setIsAuthenticated }) {
                           className={`${player.rank && player.rank <= 3 ? 'bg-blue-50' : 'bg-white'} cursor-pointer hover:bg-gray-100`}
                           onClick={() => handlePlayerClick(player)}
                         >
-                          <td className="px-4 py-4 whitespace-nowrap w-1/4">
+                          <td className="px-4 py-4 whitespace-nowrap w-1/6">
                             <div className="flex items-center justify-center">
                               {player.rank ? (
                                 player.rank <= 3 ? (
@@ -314,11 +328,11 @@ function LeaderBoard({ setIsAuthenticated }) {
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-4 w-1/2 text-center">
+                          <td className="px-4 py-4 w-1/3 text-center">
                             <div className="text-sm font-medium text-gray-900 flex items-center justify-center">
                               {player.nickname ? (
                                 <>
-                                  <span>{showRealName[player.name] ? player.name : player.nickname}</span>
+                                  <span>{displayNameType[player.name] === 0 ? player.name : player.nickname}</span>
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -326,7 +340,7 @@ function LeaderBoard({ setIsAuthenticated }) {
                                     }}
                                     className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors duration-200"
                                   >
-                                    {showRealName[player.name] ? '顯示暱稱' : '顯示真名'}
+                                    {displayNameType[player.name] === 0 ? '顯示暱稱' : '顯示真名'}
                                   </button>
                                 </>
                               ) : (
@@ -334,8 +348,15 @@ function LeaderBoard({ setIsAuthenticated }) {
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-center w-1/4">
-                            <div className="text-sm font-semibold text-gray-900">{player.score.toString().padStart(4, ' ')}</div>
+                          <td className="px-4 py-4 w-1/3 text-center">
+                            <div className="text-sm text-gray-900">
+                              {player.department || '未設置'}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-center w-1/6">
+                            <div className="text-sm font-semibold text-gray-900">
+                              {player.score.toString().padStart(4, ' ')}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -365,7 +386,7 @@ function LeaderBoard({ setIsAuthenticated }) {
           )}
         </AnimatePresence>
 
-        {/* 懸浮通知 */}
+        {/* 懸浮通 */}
         <AnimatePresence>
           {notification && (
             <motion.div

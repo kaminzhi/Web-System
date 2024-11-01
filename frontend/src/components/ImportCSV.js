@@ -38,9 +38,49 @@ function ImportCSV() {
   const previewCSV = (file) => {
     Papa.parse(file, {
       complete: (result) => {
-        setPreviewData(result.data.slice(0, 5)); // 預覽前5行
+        // 檢查是否有數據
+        if (!result.data || result.data.length === 0) {
+          setErrorMessage('CSV 文件是空的');
+          setShowErrorDialog(true);
+          setFile(null);
+          setPreviewData(null);
+          return;
+        }
+
+        // 獲取第一行作為標題
+        const headers = Object.keys(result.data[0]);
+        const expectedHeaders = ['Name', 'Nickname', 'Department'];
+        
+        // 檢查是否包含所需的所有欄位
+        const missingHeaders = expectedHeaders.filter(header => 
+          !headers.some(h => h === header)
+        );
+
+        if (missingHeaders.length > 0) {
+          setErrorMessage(
+            `CSV 格式不正確。缺少以下必要欄位：\n${missingHeaders.join(', ')}\n\n` +
+            '請確保 CSV 檔案包含以下欄位：\n' +
+            '- Name（姓名）\n' +
+            '- Nickname（暱稱）\n' +
+            '- Department（系班級）'
+          );
+          setShowErrorDialog(true);
+          setFile(null);
+          setPreviewData(null);
+          return;
+        }
+
+        // 設置預覽數據（前5行）
+        setPreviewData(result.data.slice(0, 5));
       },
-      header: true,
+      header: true, // 使用第一行作為標題
+      skipEmptyLines: true, // 跳過空行
+      error: (error) => {
+        setErrorMessage(`解析 CSV 文件時發生錯誤：${error.message}`);
+        setShowErrorDialog(true);
+        setFile(null);
+        setPreviewData(null);
+      }
     });
   };
 

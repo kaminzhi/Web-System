@@ -1,19 +1,16 @@
-FROM node:14
+FROM node:18-alpine
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
+# 複製 package.json 和 package-lock.json
 COPY package*.json ./
 
+# 安裝依賴
 RUN npm install
 
+# 複製源代碼
 COPY . .
-
-RUN ls -la /usr/src/app/src
-
-RUN ls -la /usr/src/app
-
-RUN pwd
 
 EXPOSE 5000
 
-CMD ["node", "src/server.js"]
+CMD ["npm", "start"]

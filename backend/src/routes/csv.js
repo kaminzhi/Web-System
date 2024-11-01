@@ -121,21 +121,21 @@ router.post('/import', upload.single('file'), async (req, res) => {
 });
 
 async function processResults(client, results, gameTables) {
-  // 假設CSV的格式是: Name,Nickname (可能還有其他列,但我們只使用這兩列)
-  for (let i = 1; i < results.length; i++) { // 跳過標題行
+  // 假設CSV的格式是: Name,Nickname,Department
+  for (let i = 1; i < results.length; i++) {
     const row = results[i];
-    const name = row[0]; // 假設Name是第一列
-    const nickname = row[1] || null; // 假設Nickname是第二列，如果為空則設為null
+    const name = row[0];
+    const nickname = row[1] || null;
+    const department = row[2] || null;
 
-    // 對每個遊戲表格執行插入操作
     for (const tableName of gameTables) {
       try {
         await client.query(
-          `INSERT INTO ${tableName} (name, score, nickname) VALUES ($1, $2, $3)`,
-          [name, 0, nickname] // score 預設為 0
+          `INSERT INTO ${tableName} (name, score, nickname, department) VALUES ($1, $2, $3, $4)`,
+          [name, 0, nickname, department]
         );
       } catch (error) {
-        throw new Error(`插入數據到表 ${tableName} 時出錯: ${error.message}。行: ${i + 1}, 名字: ${name}, 暱稱: ${nickname}`);
+        throw new Error(`插入數據到表 ${tableName} 時出錯: ${error.message}。行: ${i + 1}, 名字: ${name}, 暱稱: ${nickname}, 系級: ${department}`);
       }
     }
   }

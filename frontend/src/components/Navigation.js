@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaBars, FaTimes, FaInfoCircle } from 'react-icons/fa';
+import { FaBars, FaTimes, FaInfoCircle, FaUserPlus, FaUserMinus, FaFileImport, FaChartLine } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 
 function Navigation() {
@@ -22,10 +22,37 @@ function Navigation() {
 
   const menuItems = isAuthenticated
     ? [
-        { title: '首頁', path: '/' },
-        { title: '排行榜', path: '/leaderboard' },
-        { title: '導入玩家CSV', path: '/import-csv' },
-        { title: '添加新成員', path: '/add-member' },
+        { 
+          title: '首頁', 
+          path: '/',
+          icon: null
+        },
+        { 
+          title: '排行榜', 
+          path: '/leaderboard',
+          icon: null
+        },
+        { 
+          title: '導入玩家CSV', 
+          path: '/import-csv',
+          icon: <FaFileImport className="mr-2" />
+        },
+        { 
+          title: '添加新成員', 
+          path: '/add-member',
+          icon: <FaUserPlus className="mr-2" />
+        },
+        { 
+          title: '刪除成員', 
+          path: '/delete-member',
+          icon: <FaUserMinus className="mr-2" />,
+          className: 'text-red-300 hover:text-red-100'
+        },
+        {
+          title: '實時排行',
+          path: '/live-ranking',
+          icon: <FaChartLine className="mr-2" />
+        }
       ]
     : [];
 
@@ -45,15 +72,21 @@ function Navigation() {
                 <Link
                   key={index}
                   to={item.path}
-                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 focus:outline-none focus:bg-gray-700 transition duration-150 ease-in-out"
+                  className={`px-3 py-2 rounded-md text-sm font-medium 
+                    hover:bg-gray-700 focus:outline-none focus:bg-gray-700 
+                    transition duration-150 ease-in-out flex items-center
+                    ${item.className || ''}`}
                 >
+                  {item.icon}
                   {item.title}
                 </Link>
               ))}
               {isAuthenticated && (
                 <button
                   onClick={handleLogout}
-                  className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 focus:outline-none focus:bg-gray-700 transition duration-150 ease-in-out"
+                  className="px-3 py-2 rounded-md text-sm font-medium 
+                    hover:bg-gray-700 focus:outline-none focus:bg-gray-700 
+                    transition duration-150 ease-in-out"
                 >
                   登出
                 </button>
@@ -93,9 +126,14 @@ function Navigation() {
                 <Link
                   key={index}
                   to={item.path}
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700 transition duration-150 ease-in-out"
+                  className={`block px-3 py-2 rounded-md text-base font-medium 
+                    text-gray-300 hover:text-white hover:bg-gray-700 
+                    focus:outline-none focus:text-white focus:bg-gray-700 
+                    transition duration-150 ease-in-out flex items-center
+                    ${item.className || ''}`}
                   onClick={closeMenu}
                 >
+                  {item.icon}
                   {item.title}
                 </Link>
               ))}
